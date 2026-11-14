@@ -445,6 +445,19 @@ else
   APPS="$("$NODE" -e "process.stdout.write(require('$ECOSYSTEM').apps.map((a) => a.name).join(' '))" 2>/dev/null)"
   pm2_status() { "$PM2" jlist 2>/dev/null | "$NODE" -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{let l=[];try{l=JSON.parse(s.slice(s.indexOf("[")))}catch{}l.forEach((p)=>console.log(p.name+" "+((p.pm2_env&&p.pm2_env.status)||"?")))})'; }
   status_of() { printf '%s\n' "$STATUS" | awk -v n="$1" '$1 == n { print $2; exit }'; }
+  MY_PM2_HOME="${PM2_HOME:-$HOME/.pm2}"
+  # Another pm2 of this user with a different home (e.g. started by hand with npm run start while this script uses
+  # PM2_HOME_DIR, or the other way round) runs its own copy of the portal on the same ports: the second copy then
+  # keeps crashing. Found from the pm2 daemon's process title "PM2 vX.Y.Z: God Daemon (<home>)".
+  OTHER_PM2="$(ps -u "$(id -u)" -o args= 2>/dev/null | sed -n 's/.*PM2 v[0-9.]*: God Daemon (\(.*\))[[:space:]]*$/\1/p' | grep -vxF "$MY_PM2_HOME" | sort -u)"
+  if [ -n "$OTHER_PM2" ]; then
+    for h in $OTHER_PM2; do
+      fail "another pm2 is running with home $h (this script uses $MY_PM2_HOME): two copies of the portal clash"
+      todo "keep ONE pm2: stop the other with:  PM2_HOME=$h $PM2 kill"
+      todo "or use that one: set ${ENVIRONMENT}_PM2_HOME_DIR=\"$h\" (\"\" = ~/.pm2) in this script and pm2_watchdog.sh"
+    done
+  fi
+  stop_if_failed
   if [ "$CHECK_ONLY" -eq 0 ]; then
     # Running again on a set-up server: apps already online are left running (no downtime) unless --restart;
     # missing apps are started, stopped / errored ones restarted
@@ -467,11 +480,23 @@ else
   PM2_PID="$(cat "${PM2_HOME:-$HOME/.pm2}/pm2.pid" 2>/dev/null)"
   if [ "$CHECK_ONLY" -eq 1 ] && ! { [ -n "$PM2_PID" ] && kill -0 "$PM2_PID" 2>/dev/null; }; then STATUS=""; warn "pm2 is not running"
   else STATUS="$(pm2_status)"; fi
+  # error log file of an app (from pm2), for the last lines when it is not online
+  err_log_of() { "$PM2" jlist 2>/dev/null | "$NODE" -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{let l=[];try{l=JSON.parse(s.slice(s.indexOf("[")))}catch{}const p=l.find((x)=>x.name===process.argv[1]);if(p&&p.pm2_env)process.stdout.write(p.pm2_env.pm_err_log_path||"")})' "$1"; }
   for app in $APPS; do
     st="$(status_of "$app")"
     if [ "$st" = "online" ]; then ok "$app online"
     elif [ "$CHECK_ONLY" -eq 1 ]; then warn "$app ${st:-not in pm2}"
-    else fail "$app ${st:-not in pm2}: see logs/pm2-* files"; fi
+    else
+      case "$st" in
+        "waiting restart"|waiting|errored) fail "$app keeps crashing (pm2: $st) - the last lines of its error log:" ;;
+        *) fail "$app ${st:-not in pm2}" ;;
+      esac
+      ERR_LOG="$(err_log_of "$app")"
+      if [ -n "$ERR_LOG" ] && [ -f "$ERR_LOG" ]; then
+        tail -n 12 "$ERR_LOG" | sed 's/^/           | /' | while IFS= read -r l; do out "$l"; done
+        todo "full log: $ERR_LOG   (EADDRINUSE = the port is taken, e.g. by another pm2)"
+      else todo "see $APP_DIR/logs/pm2-* files"; fi
+    fi
   done
   if [ "$CHECK_ONLY" -eq 0 ] && [ "$FAILS" -eq 0 ]; then "$PM2" save >/dev/null 2>&1 && ok "pm2 save: app list remembered"; fi
   # Start at boot: pm2 prints a sudo command; it is shown, not run
