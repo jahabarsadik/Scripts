@@ -143,6 +143,11 @@ ask() { # ask "question" -> 0 = yes
   local a; read -r -p "  $1 [y/N] " a; [ "$a" = "y" ] || [ "$a" = "Y" ]
 }
 
+# Run a command with its output added to the log file THROUGH A PIPE: written straight to a file, Node programs such
+# as the frontend build (esbuild) fail with "RangeError: Invalid array length" / "The service was stopped".
+# pipefail (set above) keeps the command's own exit code.
+logged() { "$@" 2>&1 | cat >> "${LOG_FILE:-/dev/null}"; }
+
 # ---------- 1. environment ----------
 HOST="$(hostname 2>/dev/null | tr '[:upper:]' '[:lower:]')"
 case "$HOST" in
@@ -377,12 +382,12 @@ else
   install_folder() { # install_folder <folder> <label>
     local dir="$1" label="$2" p failed=0 failed_list="" total=0
     info "$NPM --prefix $dir install ($label) ..."
-    if "$NPM" --prefix "$dir" install >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "$label packages installed"; return 0; fi
+    if logged "$NPM" --prefix "$dir" install; then ok "$label packages installed"; return 0; fi
     warn "$label: npm install failed - installing its packages one by one (npm --prefix $dir install <package>)"
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       total=$((total + 1))
-      if "$NPM" --prefix "$dir" install "$p" --no-save >> "${LOG_FILE:-/dev/null}" 2>&1; then info "  installed $p"
+      if logged "$NPM" --prefix "$dir" install "$p" --no-save; then info "  installed $p"
       else failed=$((failed + 1)); failed_list="$failed_list $p"; out "  [FAIL]   $p"; fi
     done <<< "$("$NODE" -e "const p = require('$dir/package.json'); Object.entries({ ...(p.dependencies || {}), ...(p.devDependencies || {}) }).forEach(([n, v]) => console.log(n + '@' + v))" 2>/dev/null)"
     if [ "$failed" -gt 0 ]; then
@@ -391,7 +396,7 @@ else
       return 1
     fi
     # every package went in one by one: one more full install fills in what they need
-    if "$NPM" --prefix "$dir" install >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "$label packages installed ($total one by one, then npm install)"
+    if logged "$NPM" --prefix "$dir" install; then ok "$label packages installed ($total one by one, then npm install)"
     else ok "$label: all $total packages installed one by one"; warn "$label: the npm install after them still reports an error (see ${LOG_FILE:-the output})"; fi
     return 0
   }
@@ -405,8 +410,16 @@ else
     else fail "pm2 was not installed: check that the registry has the pm2 package (root package.json)"; fi
   fi
   stop_if_failed
+  NEED_BUILD=1 # new packages: build the frontend again
+fi
+stop_if_failed
+# Frontend build: after new packages, or when frontend/dist has no built app yet (e.g. a build that failed last time)
+if [ "${NEED_BUILD:-0}" -eq 0 ] && [ ! -f "$APP_DIR/frontend/dist/index.html" ]; then
+  if [ "$CHECK_ONLY" -eq 1 ]; then warn "the frontend is not built yet ($APP_DIR/frontend/dist)"; else NEED_BUILD=1; info "the frontend is not built yet"; fi
+fi
+if [ "${NEED_BUILD:-0}" -eq 1 ] && [ "$CHECK_ONLY" -eq 0 ]; then
   info "$NPM --prefix $APP_DIR run build (frontend) ..."
-  if "$NPM" --prefix "$APP_DIR" run build >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "frontend built ($APP_DIR/frontend/dist)"
+  if logged "$NPM" --prefix "$APP_DIR" run build; then ok "frontend built ($APP_DIR/frontend/dist)"
   else fail "npm run build failed (see ${LOG_FILE:-the output})"; fi
 fi
 stop_if_failed
@@ -428,12 +441,12 @@ else
       st="$(status_of "$app")"
       if [ "$st" = "online" ] && [ "$RESTART" -eq 0 ] && [ "$PACKAGES_CHANGED" -eq 1 ]; then
         # new packages are loaded only when the app starts again
-        if "$PM2" restart "$app" >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "$app restarted to load the new packages"; STARTED=1; else fail "pm2 could not restart $app"; fi
+        if logged "$PM2" restart "$app"; then ok "$app restarted to load the new packages"; STARTED=1; else fail "pm2 could not restart $app"; fi
       elif [ "$st" = "online" ] && [ "$RESTART" -eq 0 ]; then info "$app already online: left running (--restart to restart it)"
       elif [ -z "$st" ]; then
-        if "$PM2" start "$ECOSYSTEM" --only "$app" >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "$app started"; STARTED=1; else fail "pm2 could not start $app"; fi
+        if logged "$PM2" start "$ECOSYSTEM" --only "$app"; then ok "$app started"; STARTED=1; else fail "pm2 could not start $app"; fi
       else
-        if "$PM2" restart "$app" >> "${LOG_FILE:-/dev/null}" 2>&1; then ok "$app restarted (was $st)"; STARTED=1; else fail "pm2 could not restart $app"; fi
+        if logged "$PM2" restart "$app"; then ok "$app restarted (was $st)"; STARTED=1; else fail "pm2 could not restart $app"; fi
       fi
     done
     [ "$STARTED" -eq 1 ] && sleep 8
