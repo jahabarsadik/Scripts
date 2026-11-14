@@ -15,9 +15,9 @@
 #    5. certificates in ssl/ (the files named in config.js https certFile / keyFile / caFile - each server has its
 #       own names): permission CERT_MODE (SETTINGS, 775), expiry date
 #    6. network: database and LDAP servers reachable (TCP)
-#    7. packages: npm install in the root, backend and frontend (as npm run install:all; pm2 included: it is a package
-#       of the root package.json) from this environment's registry (NPM_REGISTRY, e.g. JFrog; NPM_TRUSTED_HOST when
-#       its certificate is not trusted); a folder whose install fails gets its packages one by one
+#    7. packages: npm run install:all (root + backend + frontend; pm2 included: it is a package of the root
+#       package.json) with npm's own settings (~/.npmrc), exactly as by hand - or NPM_REGISTRY / NPM_TRUSTED_HOST when
+#       set; if it fails: folder by folder, and a folder that still fails gets its packages one by one
 #       (npm --prefix <folder> install <package>@<version>); then a frontend build - only when
 #       node_modules or pm2 is missing, or a package.json / package-lock.json of the root, backend or frontend changed
 #       since the last install on this server (otherwise skipped). No global pm2 is needed.
@@ -58,7 +58,9 @@ PROD_HOST_PREFIX="x01g"
 #   APP_DIR       the portal folder (the one with ecosystem.config.js); "" = two folders above this script
 #   NODE_BIN_DIR  folder that holds node and npm; "" = the node already in PATH (or the usual places)
 #   PM2_HOME_DIR  pm2's home folder; "" = ~/.pm2 of the user running this script
-#   NPM_REGISTRY  npm registry for the packages (e.g. that environment's JFrog URL); "" = npm's own setting (~/.npmrc)
+#   NPM_REGISTRY  npm registry for the packages; "" (recommended) = npm's own setting in ~/.npmrc, exactly as when
+#                 npm run install:all is run by hand (including the JFrog login there). Set it only when ~/.npmrc has
+#                 no registry: a different address than ~/.npmrc may not get its login (JFrog then answers 404)
 #   NPM_TRUSTED_HOST  the registry's host name when its HTTPS certificate is not trusted by this server (e.g. an
 #                 internal certificate): npm then does not check the certificate (npm has no trusted-host setting;
 #                 this uses strict-ssl=false for this script's npm calls only, ~/.npmrc is not changed). "" = check it
@@ -67,10 +69,10 @@ PROD_HOST_PREFIX="x01g"
 #   SSL_CER / SSL_KEY / SSL_CHAIN  full paths of this environment's certificate, private key and chain certificate
 #                 on the server, only when they are kept outside <APP_DIR>/ssl: step 3 copies them into ssl/ under
 #                 the names in this server's config.js https certFile / keyFile / caFile. "" = nothing to copy
-UAT_APP_DIR="/CBGM/SREPORTAL"           # the portal folder (also the user's home folder)
+UAT_APP_DIR="/CBGM/SREPORTAL"           # the portal folder
 UAT_NODE_BIN_DIR=""     # e.g. "/opt/node-v24.11.0-linux-x64/bin"
-UAT_PM2_HOME_DIR="/CBGM/SREPORTAL/.pm2"  # pm2's home (~/.pm2 of the portal user)
-UAT_NPM_REGISTRY=""     # e.g. "https://jfrog-uat.example.com/artifactory/api/npm/npm-remote/"
+UAT_PM2_HOME_DIR=""     # "" = ~/.pm2 of the portal user (the same pm2 as npm run start by hand)
+UAT_NPM_REGISTRY=""     # "" = npm's own setting (~/.npmrc), as npm run install:all by hand - recommended
 UAT_NPM_TRUSTED_HOST="" # e.g. "jfrog-uat.example.com"
 UAT_HEALTH_HOST=""      # "" = this server's full name
 # Certificates are kept in /CBGM/SREPORTAL/ssl (the portal's own ssl/ folder), so nothing is copied: leave these
@@ -80,10 +82,10 @@ UAT_SSL_CER=""          # only if the files are elsewhere, e.g. "/path/to/uat/ce
 UAT_SSL_KEY=""          # e.g. "/path/to/uat/private.key"
 UAT_SSL_CHAIN=""        # e.g. "/path/to/uat/chain.cer"   (optional)
 
-PROD_APP_DIR="/CBGM/SREPORTAL"          # the portal folder (also the user's home folder)
+PROD_APP_DIR="/CBGM/SREPORTAL"          # the portal folder
 PROD_NODE_BIN_DIR=""    # e.g. "/opt/node-v24.11.0-linux-x64/bin"
-PROD_PM2_HOME_DIR="/CBGM/SREPORTAL/.pm2" # pm2's home (~/.pm2 of the portal user)
-PROD_NPM_REGISTRY=""    # e.g. "https://jfrog-prod.example.com/artifactory/api/npm/npm-remote/"
+PROD_PM2_HOME_DIR=""    # "" = ~/.pm2 of the portal user (the same pm2 as npm run start by hand)
+PROD_NPM_REGISTRY=""    # "" = npm's own setting (~/.npmrc), as npm run install:all by hand - recommended
 PROD_NPM_TRUSTED_HOST="" # e.g. "jfrog-prod.example.com"
 PROD_HEALTH_HOST=""     # "" = this server's full name (or e.g. the GTM name)
 PROD_SSL_CER=""         # leave empty: certificates are in /CBGM/SREPORTAL/ssl (see UAT above)
@@ -196,13 +198,17 @@ fi
 if [ -n "$NPM" ]; then
   ok "npm $("$NPM" -v 2>/dev/null) ($NPM)"
   # npm settings for this script's npm calls only (environment variables; ~/.npmrc is not changed)
+  NPM_OWN_REGISTRY="$("$NPM" config get registry 2>/dev/null)"
   if [ -n "$NPM_REGISTRY" ]; then
+    if [ "${NPM_OWN_REGISTRY%/}" != "${NPM_REGISTRY%/}" ] && [ "${NPM_OWN_REGISTRY%/}" != "https://registry.npmjs.org" ]; then
+      warn "${ENVIRONMENT}_NPM_REGISTRY ($NPM_REGISTRY) differs from npm's own registry in ~/.npmrc ($NPM_OWN_REGISTRY):"
+      todo "the JFrog login in ~/.npmrc may not apply to it (JFrog then answers 404); leave ${ENVIRONMENT}_NPM_REGISTRY empty"
+    fi
     export npm_config_registry="$NPM_REGISTRY"
-    # package-lock.json keeps each package's download address from the machine that made it (often
-    # registry.npmjs.org): always: fetch them from this registry instead
-    export npm_config_replace_registry_host=always
-    ok "npm registry (${ENVIRONMENT}_NPM_REGISTRY): $NPM_REGISTRY (also for the addresses in package-lock.json)"
-  else info "npm registry: npm's own setting ($("$NPM" config get registry 2>/dev/null))"; fi
+    # (no replace-registry-host: it swaps only the host of the package-lock.json addresses, not JFrog's
+    # /artifactory/api/npm/<repo>/ path, which gives 404)
+    ok "npm registry (${ENVIRONMENT}_NPM_REGISTRY): $NPM_REGISTRY"
+  else ok "npm registry: npm's own setting in ~/.npmrc ($NPM_OWN_REGISTRY), as when installing by hand"; fi
   if [ -n "$NPM_TRUSTED_HOST" ]; then
     export npm_config_strict_ssl=false
     ok "trusted host (${ENVIRONMENT}_NPM_TRUSTED_HOST): $NPM_TRUSTED_HOST - its HTTPS certificate is not checked"
@@ -373,7 +379,7 @@ elif [ "$SKIP_INSTALL" -eq 1 ]; then warn "packages need installing ($PKG_REASON
 else
   info "install needed: $PKG_REASON"
   if [ -n "$NPM_REGISTRY" ]; then info "from registry $NPM_REGISTRY (${ENVIRONMENT}_NPM_REGISTRY)"
-  else warn "${ENVIRONMENT}_NPM_REGISTRY is empty: installing from npm's own setting ($("$NPM" config get registry 2>/dev/null))"; fi
+  else info "with npm's own settings (~/.npmrc): $("$NPM" config get registry 2>/dev/null)"; fi
   # Same as npm run install:all (root, backend, frontend), one folder at a time. When a folder's install fails, its
   # packages (package.json dependencies + devDependencies) are installed one by one:
   #   npm --prefix <folder> install <package>@<version in package.json> --no-save
@@ -401,9 +407,15 @@ else
     return 0
   }
   INSTALL_OK=1
-  install_folder "$APP_DIR" "root (pm2)" || INSTALL_OK=0
-  install_folder "$APP_DIR/backend" "backend" || INSTALL_OK=0
-  install_folder "$APP_DIR/frontend" "frontend" || INSTALL_OK=0
+  # First exactly as by hand: npm run install:all (root + backend + frontend)
+  info "$NPM --prefix $APP_DIR run install:all ..."
+  if logged "$NPM" --prefix "$APP_DIR" run install:all; then ok "packages installed (npm run install:all)"
+  else
+    warn "npm run install:all failed: installing folder by folder (see ${LOG_FILE:-the output})"
+    install_folder "$APP_DIR" "root (pm2)" || INSTALL_OK=0
+    install_folder "$APP_DIR/backend" "backend" || INSTALL_OK=0
+    install_folder "$APP_DIR/frontend" "frontend" || INSTALL_OK=0
+  fi
   if [ "$INSTALL_OK" -eq 1 ]; then
     pkg_sum > "$PKG_STAMP"; PACKAGES_CHANGED=1
     if [ -x "$APP_DIR/node_modules/.bin/pm2" ]; then ok "pm2 $("$NODE" -p "require('$APP_DIR/node_modules/pm2/package.json').version" 2>/dev/null) installed (root package.json) from $("$NPM" config get registry 2>/dev/null)"
