@@ -1,0 +1,753 @@
+/* SRE Portal theme – follows the reference admin page (bootstrap/index.html + css/style.css):
+   Bootstrap defaults, light grey page, DBS-style header with a red accent. */
+:root {
+  --brand: #ff3333;          /* header accent (reference: --brand-red) */
+  --brand-dark: #e02020;
+  --brand-light: #fdeaea;
+  /* The page header (banner) red */
+  --header-red: #e3161b;
+  --header-red-gradient: linear-gradient(100deg, #e3161b 0%, #ec3434 40%, #f0573f 68%, #e8301f 100%);
+  /* table header rows (config.js chooseColor.tableHeader; Layout.jsx overrides these three for 'black' or a colour code) */
+  /* Section and table header red: a soft top-to-bottom red (lighter than the page header) */
+  --soft-red: #d63a2f;
+  --soft-red-gradient: linear-gradient(180deg, #d02a26 0%, #dc4c38 100%);
+  --th-bg: var(--soft-red);           /* flat fallback (and the colour chooseColor.tableHeader replaces) */
+  --th-bg-strong: var(--soft-red);
+  --th-bg-image: var(--soft-red-gradient); /* Layout.jsx sets 'none' when chooseColor.tableHeader is black / a code */
+  --th-border: #c0322b;
+  --tab-bg: var(--brand);         /* selected tab (config.js chooseColor.tab; Layout.jsx overrides it) */
+  --ink: #212529;
+  --select-blue: #0d6efd;    /* multi-select chips use Bootstrap primary */
+  --select-blue-light: #e7f1ff;
+  --header-h: 64px;          /* white header bar */
+}
+body { background: #f5f6f8; }
+
+.text-brand { color: var(--brand) !important; }
+
+/* DBS logo + module name (login / chooser / access-denied pages) */
+.brand-logo { display: inline-flex; align-items: center; gap: 12px; }
+.brand-img { height: 30px; width: auto; display: block; }
+
+/* ---- Page frame ---------------------------------------------------------- */
+.top-nav-layout { padding-top: var(--header-h); }
+.main { --main-pad-y: 24px; --main-pad-x: 30px; padding: var(--main-pad-y) var(--main-pad-x); margin-left: auto; margin-right: auto; max-width: 1320px; }
+@media (max-width: 767.98px) { .main { --main-pad-y: 16px; --main-pad-x: 16px; } }
+.top-nav-layout { overflow-x: clip; } /* the full-width page banner must not cause sideways scrolling */
+
+/* ---- Page banner (PageHero): full-width red gradient under the top menu ------ */
+.page-banner {
+  position: relative; overflow: hidden; color: #fff;
+  /* break out of .main to the full window width; content stays lined up with the page */
+  margin: calc(-1 * var(--main-pad-y)) calc(50% - 50vw) 20px;
+  padding: 10px max(var(--main-pad-x), calc(50vw - 660px + var(--main-pad-x))) 12px; /* compact */
+  background:
+    radial-gradient(ellipse 45% 90% at 42% 115%, rgba(255, 196, 120, .55), transparent 70%),
+    radial-gradient(circle at 92% -10%, rgba(255, 166, 77, .85), transparent 40%),
+    var(--header-red-gradient);
+}
+.page-banner::before { /* orange triangle */
+  content: ''; position: absolute; right: 14%; bottom: 0; width: 320px; height: 115%;
+  background: linear-gradient(160deg, rgba(255, 190, 100, .8), rgba(242, 92, 44, .45));
+  clip-path: polygon(48% 0, 100% 100%, 0 100%);
+}
+.page-banner::after { /* darker red shape on the right edge */
+  content: ''; position: absolute; right: -6%; top: -30%; width: 300px; height: 160%;
+  background: linear-gradient(180deg, rgba(214, 30, 30, .65), rgba(255, 120, 100, .35));
+  border-radius: 0 0 0 60%;
+}
+.page-banner-inner { position: relative; z-index: 1; }
+/* right side of the banner: breadcrumb, then the header buttons */
+.page-banner-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
+.page-banner-side > nav { margin: 0 !important; }
+.page-banner-side .breadcrumb { justify-content: flex-end; }
+.page-banner-title { font-size: clamp(1.3rem, 1.9vw, 1.65rem); font-weight: 600; letter-spacing: -.01em; }
+.page-banner-sub { margin-top: .15rem; font-size: .9rem; color: rgba(255, 255, 255, .92); }
+.page-banner .welcome-text { color: #fff; font-size: 1.05rem; }
+.page-banner .breadcrumb-item, .page-banner .breadcrumb-item.active, .page-banner .breadcrumb-item a { color: rgba(255, 255, 255, .85); }
+.page-banner .breadcrumb-item a:hover { color: #fff; }
+.page-banner .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, .6); }
+.page-banner .btn-primary { background: #fff; border-color: #fff; color: var(--brand-dark); font-weight: 600; }
+.page-banner .btn-primary:hover, .page-banner .btn-primary:focus-visible { background: #ffe9e9; border-color: #ffe9e9; color: var(--brand-dark); }
+@media (max-width: 767.98px) { .page-banner::before { width: 240px; right: 4%; } .page-banner::after { width: 160px; } }
+[id] { scroll-margin-top: calc(var(--header-h) + 16px); }
+
+/* ---- Header: white bar (dbs.com.sg style) ---------------------------------- */
+.site-header { background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04); }
+
+.main-nav { padding: 0; }
+.main-nav > .container-fluid { min-height: 64px; }
+.header-logo { height: 30px; width: auto; display: block; }
+/* Module name (SRE / CBGM) after the DBS logo, in black with a divider */
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.header-module {
+  color: #000; font-weight: 700; font-size: 1.25rem; letter-spacing: .02em; line-height: 1;
+  padding-left: 12px; border-left: 1px solid #d6d6d6;
+}
+/* Search pill and the red Log out block on the right */
+.btn-header-action {
+  background: var(--brand); color: #fff; border: 0; border-radius: 0; font-weight: 600;
+  height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 22px;
+}
+.btn-header-action:hover, .btn-header-action:focus-visible, .btn-header-action[aria-expanded="true"] { background: var(--brand-dark); color: #fff; }
+.btn-header-action .user-icon { font-size: 1.5rem; line-height: 1; }
+.user-dropdown { top: 100%; right: 0; left: auto; margin-top: 0; min-width: 240px; border-radius: 0 0 8px 8px; }
+
+/* Below 992px: smaller header buttons */
+@media (max-width: 991.98px) {
+  .btn-header-action { height: auto; padding: 10px 16px; border-radius: 6px; display: inline-flex; }
+}
+/* Keyboard focus in the header: a red inset ring */
+.btn-header-action:focus-visible {
+  outline: 0; box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+/* ---- Data table ------------------------------------------------------------ */
+/* Table column headers: red (brand) with white, centred text */
+.data-table > thead > tr:first-child > th,
+.review-table > thead > tr > th { --bs-table-bg: var(--th-bg-strong); --bs-table-color: #fff; background-color: var(--th-bg-strong); background-image: var(--th-bg-image); color: #fff; border-color: var(--th-border); text-align: center; vertical-align: middle; }
+.data-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.data-table .sort-icon { font-size: .8em; opacity: .3; }
+.data-table > thead > tr:first-child .sort-icon:not(.active) { opacity: .6; }
+.data-table .sort-icon.active { opacity: 1; }
+.data-table tr.clickable { cursor: pointer; }
+/* Long text in a table cell wraps onto the next line instead of widening the table */
+/* Active / Inactive tag in tables: a little larger than a normal badge */
+.badge.status-badge { font-size: var(--app-ui-size, 13px); font-weight: 600; padding: .4em .75em; } /* same size as the App Code in the table */
+.data-table td.cell-wrap { min-width: 180px; max-width: 320px; white-space: normal; overflow-wrap: anywhere; }
+.search-box { width: 240px; }
+
+/* Multi-select */
+.multi-select-control { min-height: 38px; height: auto; cursor: pointer; padding-bottom: .2rem; }
+.multi-select-options { max-height: 220px; overflow-y: auto; }
+.multi-select .dropdown-item { cursor: pointer; }
+.multi-select .dropdown-item:active, .multi-select .dropdown-item:hover { background: var(--select-blue-light); color: var(--ink); }
+.multi-select .form-check-input:checked { background-color: var(--select-blue); border-color: var(--select-blue); }
+.multi-select .btn-link { color: var(--select-blue); }
+.multi-select-control:focus { border-color: var(--select-blue); box-shadow: 0 0 0 .2rem rgba(21, 101, 192, .2); }
+/* Multi-select values (chips) are blue everywhere */
+.chip { background: var(--select-blue); color: #fff; font-weight: 600; font-size: .75rem; padding: .35em .6em; display: inline-flex; align-items: center; } /* selected values in every multi-select (SRE and CBGM) */
+.chip .btn-close { width: .5em; height: .5em; padding: 0; }
+
+/* Home page "Choose your workspace": same dark navy background and network as the login panel (.login-brand) */
+.login-hero {
+  position: relative; overflow: hidden;
+  background: #142a5c; /* one even navy blue (no light patches) */
+}
+.login-hero > .container { position: relative; z-index: 1; } /* cards and text above the network */
+
+.card { border-radius: .75rem; }
+
+/* Column filter row */
+.data-table .filter-row th { font-weight: normal; padding-top: 4px; padding-bottom: 8px; }
+.data-table .filter-row .form-control, .data-table .filter-row .form-select { font-size: .8rem; min-width: 90px; }
+.data-table .filter-row .filter-active { border-color: var(--select-blue); background-color: var(--select-blue-light); }
+
+/* Date range picker */
+.date-range-field { position: relative; }
+.date-range-icon { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: #777; z-index: 1; pointer-events: none; }
+.date-range-field .form-control { padding-left: 2.25rem; }
+.date-range-field .react-datepicker-popper { z-index: 20; }
+.date-range-field .react-datepicker__close-icon::after { background-color: #999; }
+.sre-calendar { font-family: inherit; border: 1px solid #ddd; border-radius: .5rem; box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .12); overflow: hidden; }
+.sre-calendar .react-datepicker__header { background: #fff; border-bottom: 1px solid #eee; }
+.sre-calendar .react-datepicker__day { border-radius: 50%; }
+.sre-calendar .react-datepicker__day--in-range,
+.sre-calendar .react-datepicker__day--in-selecting-range { background: var(--brand-light); color: var(--brand); border-radius: 0; }
+.sre-calendar .react-datepicker__day--range-start,
+.sre-calendar .react-datepicker__day--range-end,
+.sre-calendar .react-datepicker__day--selecting-range-start,
+.sre-calendar .react-datepicker__day--selected { background: var(--brand) !important; color: #fff !important; border-radius: 50%; }
+.sre-calendar .react-datepicker__day--keyboard-selected { background: #f2f2f2; color: inherit; }
+
+/* Larger toggle switch */
+.form-switch-lg { display: flex; align-items: center; gap: .6rem; padding-left: 0; min-height: 38px; }
+.form-switch-lg .form-check-input { width: 3rem; height: 1.6rem; margin: 0; cursor: pointer; float: none; }
+.form-switch-lg .form-check-label { cursor: pointer; }
+
+/* Module chooser + access denied */
+.module-card { border-radius: 1rem; transition: transform .15s ease, box-shadow .15s ease; }
+.module-card:hover { transform: translateY(-3px); box-shadow: 0 1rem 2rem rgba(0, 0, 0, .25) !important; }
+.module-icon { width: 56px; height: 56px; border-radius: 12px; background: var(--brand-light); color: var(--brand); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+.denied-icon { width: 72px; height: 72px; border-radius: 50%; background: var(--brand-light); color: var(--brand); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; }
+
+/* Searchable single-select (type to filter) */
+.searchable-control { display: flex; align-items: center; padding-top: 0; padding-bottom: 0; cursor: text; }
+.searchable-control.focused { border-color: var(--brand); box-shadow: 0 0 0 .2rem var(--bs-focus-ring-color); }
+.searchable-control.disabled { background-color: var(--bs-secondary-bg); cursor: not-allowed; opacity: 1; }
+.searchable-control.disabled .searchable-input { cursor: not-allowed; color: var(--bs-secondary-color); }
+.searchable-input { border: 0; outline: 0; background: transparent; width: 100%; padding: .375rem 0; min-width: 0; }
+.searchable-control:not(.focused) .searchable-input::placeholder { color: var(--bs-secondary-color); }
+.searchable-control.focused .searchable-input::placeholder { color: #9a9a9a; }
+.searchable-clear { width: .5em; height: .5em; margin-right: .5rem; flex-shrink: 0; }
+.searchable-menu { max-height: 260px; overflow-y: auto; margin-top: 2px; }
+.searchable-menu .dropdown-item.active, .searchable-menu .dropdown-item:active { background: var(--brand-light); color: var(--ink); }
+.searchable-menu .dropdown-item.selected { font-weight: 600; color: var(--brand); }
+/* wrap: long values (e.g. Criteria ID) wrap instead of being cut off */
+.searchable-wrapped-label { flex: 1; min-width: 0; padding: .375rem 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+.searchable-input-behind { position: absolute; width: 1px; opacity: 0; pointer-events: none; }
+.searchable-wrap .searchable-menu .dropdown-item { white-space: normal; overflow-wrap: anywhere; }
+
+/* Error page (4xx / 5xx) */
+.error-card { border-radius: 12px; }
+.error-code { font-size: 4.5rem; font-weight: 800; line-height: 1; margin-bottom: .75rem; letter-spacing: -.02em; }
+.error-details { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; background: var(--bs-tertiary-bg); border-radius: 8px; padding: .9rem 1.1rem; }
+.error-details dt { font-weight: 600; color: var(--bs-secondary-color); }
+.error-details dd { margin: 0; word-break: break-all; }
+
+/* Session expiry warning */
+.session-countdown { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--bs-warning-text-emphasis); margin-bottom: .75rem; font-variant-numeric: tabular-nums; }
+
+/* ---- Login: split screen (dark navy panel with a red / blue network | sign-in panel) ---------- */
+.login-split { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr); background: #f4f6f8; }
+.login-brand {
+  position: relative; overflow: hidden; display: flex; align-items: center;
+  padding: 48px clamp(32px, 7vw, 110px);
+  background: #142a5c; /* one even navy blue (no light patches) */
+  color: #fff;
+}
+.login-brand-text { position: relative; z-index: 1; max-width: 620px; }
+.login-brand h1 { font-size: clamp(2.2rem, 4.2vw, 4rem); font-weight: 300; line-height: 1.15; letter-spacing: -.01em; margin-bottom: 1.25rem; white-space: nowrap; color: #fff; }
+.login-brand p { font-size: 1.05rem; color: rgba(255, 255, 255, .88); margin: 0; }
+.login-network { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 42%; }
+.login-network line { stroke-width: 1.3; }
+.login-network line.red { stroke: #ff3b4e; opacity: .85; }
+.login-network line.blue { stroke: #4f86e8; opacity: .7; }
+.login-network line.dash { stroke-dasharray: 3 3; }
+.login-network circle.node { fill: #ff4d5e; }
+.login-network circle.node.blue { fill: #6f9cf0; }
+.login-network circle.hot { fill: #ff2b3d; filter: drop-shadow(0 0 6px rgba(255, 43, 61, .95)) drop-shadow(0 0 16px rgba(255, 43, 61, .6)); }
+.login-network circle.glow { fill: #3d8bff; opacity: .9; filter: drop-shadow(0 0 6px rgba(61, 139, 255, .9)); }
+
+.login-panel { display: flex; align-items: center; justify-content: center; padding: 48px 32px; background: #f4f6f8; }
+.login-form-wrap { width: 100%; max-width: 380px; }
+.login-form-wrap .brand-logo { margin-bottom: 1.25rem; }
+.login-note { color: #6c757d; font-size: .92rem; line-height: 1.5; margin-bottom: 1.5rem; }
+.btn-login {
+  background: #d9412b; color: #fff; border: 0; border-radius: 4px; padding: .7rem 1rem; font-weight: 600;
+}
+.btn-login:hover, .btn-login:focus-visible { background: #bf3522; color: #fff; }
+.btn-login:disabled { background: #d9412b; color: #fff; opacity: .7; }
+
+@media (max-width: 767.98px) {
+  .login-split { grid-template-columns: 1fr; }
+  .login-brand { min-height: 240px; padding: 32px 24px 64px; }
+  .login-brand h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+  .login-network { height: 36%; }
+  .login-panel { padding: 32px 20px 40px; }
+}
+
+/* CBGM page shell */
+.cbgm-page-icon { width: 64px; height: 64px; border-radius: 16px; background: var(--brand-light); color: var(--brand); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+
+/* Time-of-day greeting under the CBGM Overview heading */
+.welcome-text { font-family: Georgia, 'Times New Roman', serif; font-size: 1.25rem; font-weight: 600; letter-spacing: .01em; color: var(--bs-primary); }
+
+/* Module footer (support contact) */
+.module-footer { border-top: 1px solid var(--bs-border-color); background: #fff; color: var(--bs-secondary-color); font-size: .85rem; text-align: center; padding: 14px 16px; }
+.module-footer a { color: var(--bs-primary); text-decoration: none; }
+.module-footer a:hover { text-decoration: underline; }
+
+/* DataTable expandable rows (+ / − button) */
+.data-table .expand-col { width: 46px; text-align: center; padding-left: .5rem; padding-right: .25rem; }
+.data-table .expand-btn { width: 26px; height: 26px; padding: 0; line-height: 1; border-radius: 50%; color: #fff; background: var(--bs-success); border: 0; display: inline-flex; align-items: center; justify-content: center; }
+.data-table .expand-btn .bi { font-size: 18px; line-height: 1; -webkit-text-stroke: .6px currentColor; } /* bigger, slightly bolder + / − */
+.data-table .expand-btn.open { background: var(--bs-danger); }
+.data-table .expand-btn:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
+.data-table tr.details-row > td { background: var(--bs-tertiary-bg); padding: .75rem 1rem .75rem 3.25rem; }
+.details-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem 1.5rem; margin: 0; }
+.details-list dt { font-size: .75rem; font-weight: 600; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .02em; }
+.details-list dd { margin: 0; word-break: break-word; }
+.details-list .details-full { grid-column: 1 / -1; } /* one item across the whole row */
+
+/* ---- Tabs on a card (Request Status, Maintenance Window) ---- */
+.data-table td.wrap-cell { min-width: 220px; max-width: 360px; white-space: normal; }
+
+/* ---- Right-side edit panel (Offcanvas) ---- */
+.app-offcanvas { width: min(480px, 100vw); visibility: visible; }
+.app-offcanvas .offcanvas-header.page-banner-mini { color: #fff; background: var(--section-bg, var(--soft-red-gradient)); } /* section red */
+.offcanvas-fields > .col-md-6 { flex: 0 0 auto; width: 100%; }
+.edit-summary { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin-bottom: 1.25rem; font-size: .9rem; }
+.edit-summary dt { color: var(--bs-secondary-color); font-weight: 500; }
+.edit-summary dd { margin: 0; font-weight: 600; }
+
+/* Blackout rule message */
+.blackout-rule { display: flex; align-items: flex-start; }
+.blackout-rule > .bi { margin-top: .15rem; }
+
+/* ---- Top-right submit result popup (components/Toast.jsx) ---- */
+.app-toasts { position: fixed; top: calc(var(--header-h, 64px) + 12px); right: 16px; z-index: 1090; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 32px)); }
+.app-toast { position: relative; overflow: hidden; display: flex; align-items: flex-start; gap: 12px; padding: 14px 14px 16px; background: #fff; border-radius: .6rem; border-left: 5px solid var(--toast-color); box-shadow: 0 10px 30px rgba(0, 0, 0, .18); animation: app-toast-in .25s ease-out; }
+.app-toast-success { --toast-color: var(--bs-success); }
+.app-toast-danger { --toast-color: var(--bs-danger); }
+.app-toast-warning { --toast-color: var(--bs-warning); }
+.app-toast-info { --toast-color: var(--bs-primary); }
+.app-toast-icon { color: var(--toast-color); font-size: 1.35rem; line-height: 1; }
+.app-toast-body { flex: 1; min-width: 0; font-size: .92rem; overflow-wrap: anywhere; }
+.app-toast-title { font-weight: 700; margin-bottom: 2px; }
+.app-toast-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--toast-color); opacity: .5; transform-origin: left; animation-name: app-toast-timer; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes app-toast-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes app-toast-timer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.modal-header-danger, .card-header-danger { color: #fff; border-bottom: 0; background: var(--soft-red-gradient); } /* section red */
+/* section headers on every page (config.js chooseColor.section; Layout.jsx sets --section-bg, else the red gradient) */
+.card-header-danger { background: var(--section-bg, var(--soft-red-gradient)); }
+
+/* ---- Update Threshold table ---- */
+.threshold-table-wrap { border: 1px solid var(--bs-border-color); border-radius: .5rem; }
+.threshold-table td { vertical-align: middle; }
+.threshold-table tr.row-editing > td { background: #fff7f5; }
+.threshold-table .form-control:disabled { background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); }
+.threshold-table .value-changed { border-color: var(--brand); box-shadow: 0 0 0 .15rem rgba(255, 51, 51, .15); font-weight: 600; }
+.threshold-table .form-switch .form-check-input { width: 2.4em; height: 1.25em; cursor: pointer; }
+.threshold-table .form-switch .form-check-input:checked { background-color: var(--bs-success); border-color: var(--bs-success); }
+.review-table th { font-size: .8rem; }
+
+/* ---- Approve / Reject switch (My Approval) ---- */
+.decision-toggle { position: relative; display: inline-flex; align-items: center; width: 104px; height: 30px; padding: 0 10px 0 34px; border: 0; border-radius: 999px; color: #fff; font-size: .82rem; font-weight: 700; transition: background-color .2s, padding .2s; }
+.decision-toggle.is-approve { background: var(--bs-success); }
+.decision-toggle.is-reject { background: var(--bs-danger); padding: 0 34px 0 12px; }
+.decision-toggle .decision-knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: left .2s; }
+.decision-toggle.is-reject .decision-knob { left: calc(100% - 27px); }
+.decision-toggle:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
+
+/* ---- Reports: report type options ---- */
+.report-option { display: flex; align-items: center; gap: .75rem; height: 100%; padding: 1rem 1.1rem; border: 1px solid var(--bs-border-color); border-radius: .6rem; cursor: pointer; background: #fff; transition: border-color .15s, background-color .15s; }
+.report-option:hover { border-color: var(--brand); }
+.report-option.is-selected { border-color: var(--brand); background: var(--brand-light); }
+.report-option .form-switch { padding-left: 0; min-height: 0; }
+.report-option .form-switch .form-check-input { margin: 0; flex-shrink: 0; width: 2.4em; height: 1.3em; cursor: pointer; float: none; }
+.report-option-icon { font-size: 1.1rem; color: var(--brand); }
+.report-option-name { font-size: .82rem; line-height: 1.3; } /* report name on the tile: a little smaller */
+
+/* ---- Header (dbs.com.sg style): Public Sans ---- */
+.site-header { font-family: 'Public Sans', Arial, sans-serif; }
+.user-dropdown { font-family: 'Public Sans', Arial, sans-serif; }
+.user-dropdown .dropdown-item { font-size: 13px; color: #18191c; }
+
+/* ---- Tables and forms: Public Sans 13px ---- */
+:root { --app-ui-font: 'Public Sans', Arial, sans-serif; --app-ui-size: 13px; }
+.table, .table th, .table td,
+.details-list dt, .details-list dd,
+.form-label, .form-control, .form-select, .form-check-label, .input-group-text,
+.form-text, .invalid-feedback,
+.multi-select .dropdown-menu, .multi-select .dropdown-item,
+.searchable-select, .searchable-select .dropdown-menu, .searchable-select .dropdown-item,
+.react-datepicker, .react-datepicker__input-container input {
+  font-family: var(--app-ui-font);
+  font-size: var(--app-ui-size);
+}
+/* small controls (filter rows, search boxes) keep the same size instead of shrinking */
+.form-control-sm, .form-select-sm, .input-group-sm > .form-control, .input-group-sm > .input-group-text,
+.data-table .filter-row .form-control, .data-table .filter-row .form-select, .review-table th {
+  font-size: var(--app-ui-size);
+}
+/* help and error text under fields: same font, a little smaller */
+.form-text, .invalid-feedback { font-size: 12px; }
+
+/* Details (+) item that must stay on one line, e.g. a long Criteria ID: takes the whole row, scrolls if wider */
+
+/* Busy spinner shown after a submit until the server answers (components/BusyOverlay.jsx) */
+.busy-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: transparent; cursor: progress; }
+.busy-overlay.show { background: rgba(255, 255, 255, .55); }
+.busy-box { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 28px; border-radius: 16px; background: #fff; box-shadow: 0 .75rem 2rem rgba(0, 0, 0, .18); }
+.busy-logo { width: 64px; height: 64px; border-radius: 14px; animation: busy-spin 1s linear infinite; }
+.busy-text { font-family: var(--app-ui-font); font-size: 13px; font-weight: 600; color: #18191c; }
+@keyframes busy-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .busy-logo { animation-duration: 3s; } }
+
+/* SRE Create Ticket: toggle rows line up with the other fields */
+.ticket-toggle { display: flex; align-items: center; gap: .6rem; min-height: 38px; padding: .4rem .75rem; margin: 0; border: 1px solid var(--bs-border-color); border-radius: .5rem; background: #fff; }
+.ticket-toggle .form-check-input { float: none; margin: 0; flex-shrink: 0; width: 2.4em; height: 1.3em; cursor: pointer; }
+.ticket-toggle .form-check-label { cursor: pointer; }
+
+/* SRE View/Modify Ticket: read-only values in a 3-column grid (long text across the full width) */
+.ticket-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 0; }
+.ticket-view > div { min-width: 0; }
+.ticket-view .ticket-view-wide { grid-column: 1 / -1; }
+.ticket-view dt { font-size: 12px; font-weight: 700; color: var(--bs-emphasis-color); margin-bottom: .2rem; } /* field labels: bold */
+.ticket-view dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.text-prewrap { white-space: pre-wrap; }
+@media (max-width: 991.98px) { .ticket-view { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575.98px) { .ticket-view { grid-template-columns: 1fr; } }
+
+/* SRE header: Incident Ticket Number# search before the user icon */
+/* SRE ticket search: icon in the header opens this bar under it */
+.header-search-panel {
+  position: absolute; left: 0; right: 0; top: 100%; background: #fff; padding: 24px 0 20px;
+  border-top: 1px solid #e9e9e9; box-shadow: 0 16px 24px rgba(0,0,0,.12); z-index: 1000;
+}
+.header-search-form { max-width: 760px; margin: 0 auto; }
+.header-search-form .form-control { font-size: 1rem; }
+
+/* CBGM Onboard New Alerts table: red header row, larger toggles */
+.onboard-table .onboard-head th { background: var(--th-bg-image) var(--th-bg); color: #fff; border-color: var(--th-border); vertical-align: middle; font-weight: 600; }
+.onboard-table .onboard-head .req-star { color: #fff; }
+.onboard-table .onboard-switch { padding-left: 0; min-height: 0; }
+.onboard-table .onboard-switch .form-check-input { width: 2.6em; height: 1.4em; margin: 0; float: none; cursor: pointer; }
+/* Operator column: compact (">=" / "<=" only). The fixed ">=" box and the THROUGHPUT dropdown share one width so they line up */
+.onboard-table .operator-cell { width: 1%; min-width: 0; padding-left: 4px; padding-right: 4px; white-space: nowrap; }
+.onboard-table .operator-select, .onboard-table .operator-fixed { width: 64px; margin: 0 auto; }
+.onboard-table .operator-select { padding-left: .4rem; padding-right: 1.3rem; background-position: right .3rem center; background-size: 10px 8px; }
+.onboard-table .operator-fixed { padding-left: .4rem; padding-right: 1.3rem; }
+/* Column widths: wider Service Name; Consecutive Point and Threshold / Fail Rate the same width */
+.onboard-table .ob-col-configure { width: 92px; min-width: 92px; white-space: normal; }   /* narrow: "Configure / Threshold" on two lines */
+.onboard-table .ob-col-service { width: 480px; min-width: 480px; }   /* wider (space from Configure Threshold and SNOC): long service names on one line */
+.onboard-table .ob-col-snoc { width: 92px; min-width: 92px; white-space: normal; }   /* narrow: "SNOC Alert / Required?" on two lines */
+.onboard-table .ob-col-number { width: 100px; min-width: 100px; }
+/* SRE Overview: ticket count cards (click to filter the table) */
+.sre-stat-card { border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); transition: box-shadow .15s, border-color .15s; padding: 0; }
+.sre-stat-card:hover { box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .08); }
+.sre-stat-card.active { border-color: var(--brand); box-shadow: 0 0 0 .2rem var(--bs-focus-ring-color); }
+/* Coloured edge per state: Open blue, Pending Action Items yellow, Closed green */
+.sre-stat-card { border-left-width: .35rem; }
+.sre-stat-open { border-left-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
+.sre-stat-pending { border-left-color: var(--bs-warning); background: var(--bs-warning-bg-subtle); }
+.sre-stat-closed { border-left-color: var(--bs-success); background: var(--bs-success-bg-subtle); }
+.sre-stat-card .text-body-secondary { color: var(--bs-body-color) !important; }
+
+/* All toggles / checkboxes: green when on (instead of blue) */
+.form-check-input:checked { background-color: var(--bs-success); border-color: var(--bs-success); }
+.form-check-input:focus { border-color: rgba(25, 135, 84, .5); box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .25); }
+.form-switch .form-check-input:focus:not(:checked) { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%2825, 135, 84, 0.5%29'/%3e%3c/svg%3e"); }
+
+/* All table headers: centred (SRE and CBGM) */
+.table > thead th, .table > thead td { text-align: center; vertical-align: middle; }
+
+/* Wider side panel (Offcanvas wide) for forms with date pickers */
+.app-offcanvas.app-offcanvas-wide { width: min(600px, 100vw); }
+/* Date picker calendar rendered at page level (portalId): above side panels (1045) and popups (1055) */
+#datepicker-portal .react-datepicker-popper { z-index: 1090; }
+
+/* View/Modify Ticket tabs: a plain tab bar on the page (no card), lined up with the section cards below */
+
+/* View/Modify Ticket: section menu on the left; stays in view while scrolling on large screens */
+.ticket-section-menu { position: sticky; top: 1rem; }
+@media (max-width: 991.98px) { .ticket-section-menu { position: static; } }
+.ticket-section-menu ul { border-left: 2px solid var(--bs-border-color); margin-left: .25rem !important; }
+.ticket-section-link { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .4rem .6rem; margin-left: -2px;
+  border-left: 2px solid transparent; color: var(--bs-body-color); font-size: .9rem; border-radius: 0 .375rem .375rem 0; }
+.ticket-section-link:hover { background: var(--bs-tertiary-bg); }
+.ticket-section-link.active { border-left-color: var(--bs-danger); color: var(--bs-danger); font-weight: 600; background: var(--bs-danger-bg-subtle); }
+.ticket-section { scroll-margin-top: 1rem; }
+/* MTTD / MTTR under the ticket summary: larger tags with their own colour */
+.ticket-metric { display: inline-flex; align-items: center; gap: .35rem; font-size: 1rem; font-weight: 500;
+  padding: .45rem .9rem; border-radius: .5rem; border: 1px solid transparent; }
+.ticket-metric strong { font-weight: 700; }
+.ticket-metric-mttd { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); border-color: var(--bs-primary-border-subtle); }
+.ticket-metric-mttr { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); border-color: var(--bs-success-border-subtle); }
+
+/* ---- Left menu (SideNav.jsx; Layout.jsx SIDE_MENU_PAGES) ------------------------------------------------ */
+.side-nav-layout { --side-w: 0px; --side-open-w: 220px; --side-rail-w: 70px; } /* menu widths: expanded / collapsed bar */
+@media (min-width: 992px) {
+  .side-nav-layout { --side-w: var(--side-rail-w); } /* collapsed: the narrow bar */
+  .side-nav-layout.side-open { --side-w: var(--side-open-w); }
+}
+/* the page fills the space right of the menu */
+.side-nav-layout .main { width: auto !important; max-width: none; margin-left: var(--side-w); margin-right: 0; transition: margin-left .2s ease; }
+.side-nav-layout .module-footer { margin-left: var(--side-w); transition: margin-left .2s ease; }
+.side-nav-layout .page-banner {
+  margin-left: calc(-1 * var(--main-pad-x)); margin-right: calc(-1 * var(--main-pad-x));
+  padding-left: var(--main-pad-x); padding-right: var(--main-pad-x);
+}
+.side-nav {
+  position: fixed; top: var(--header-h); bottom: 0; left: 0; width: var(--side-open-w, 220px); z-index: 1025; overflow-y: auto;
+  padding: 10px 0 0; color: #fff; transform: translateX(-100%); transition: transform .2s ease;
+  display: flex; flex-direction: column;
+  /* same red -> orange colours and glows as the page banner (.page-banner), running top to bottom */
+  background:
+    radial-gradient(ellipse 130% 30% at 0% 100%, rgba(255, 196, 120, .5), transparent 70%),
+    radial-gradient(circle at 115% 6%, rgba(255, 166, 77, .6), transparent 32%),
+    linear-gradient(180deg, #e3161b 0%, #ec3434 40%, #f0573f 72%, #e8301f 100%);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, .08);
+}
+.side-nav.open { transform: none; }
+/* Collapsed menu, pointed at: the full menu slides out OVER the page (the page keeps its place) */
+.side-nav.peek { z-index: 1031; box-shadow: 6px 0 22px rgba(0, 0, 0, .28); }
+.side-menu .side-link {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 18px; border: 0; background: none;
+  color: rgba(255, 255, 255, .92); text-decoration: none; text-align: left; font-size: .9rem; line-height: 1.3;
+}
+.side-menu .side-link:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.side-menu .side-link.active { background: #fff; color: var(--brand-dark, #b30d14); font-weight: 600; }
+.side-menu .side-top { font-weight: 600; }
+.side-menu .side-top > .bi:first-child { font-size: 1.05rem; width: 20px; text-align: center; }
+.side-menu .side-link.active-parent { color: #fff; background: rgba(0, 0, 0, .1); }
+.side-chevron { font-size: .75rem; opacity: .8; }
+.side-sub { background: rgba(0, 0, 0, .12); padding: 4px 0 8px; }
+.side-heading { padding: 8px 14px 2px 44px; font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .7); }
+.side-menu .side-item { padding: 7px 14px 7px 44px; font-size: .86rem; font-weight: 400; }
+.side-menu .side-item .bi { font-size: .85rem; opacity: .9; }
+.side-menu .side-item-sub { padding-left: 58px; }
+.side-menu .side-feature { margin-top: 4px; font-style: italic; }
+.side-nav-backdrop { position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0; z-index: 1024; background: rgba(0, 0, 0, .35); }
+.side-nav-toggle { border: 0; padding: 4px 8px; font-size: 1.45rem; line-height: 1; color: #333; }
+.side-nav-toggle:hover, .side-nav-toggle:focus-visible { color: var(--bs-primary); background: #f3f3f3; }
+/* header stays on one line with the left menu (phones too) */
+.side-nav-layout .main-nav > .container-fluid { flex-wrap: nowrap; }
+.side-nav-layout .main-nav .header-brand { margin-right: .75rem !important; min-width: 0; }
+@media (max-width: 991.98px) {
+  .side-nav-layout .btn-header-action { padding: 8px 12px; }
+  .side-nav-layout #headerActions { gap: 6px; }
+  .side-nav-layout .btn-header-action.me-lg-2 { margin-top: 0 !important; margin-bottom: 0 !important; }
+}
+/* edge tab of the left menu (‹ / ›) */
+.side-edge-toggle {
+  position: fixed; top: 50%; transform: translateY(-50%); left: 0; z-index: 1026; width: 22px; height: 44px; padding: 0; border: 0; /* middle of the screen */
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 0 8px 8px 0;
+  background: #fff; color: #d01822; font-size: .9rem; box-shadow: 2px 1px 8px rgba(0, 0, 0, .25); transition: left .2s ease, background .15s;
+}
+.side-edge-toggle:hover, .side-edge-toggle:focus-visible { background: #ffe9e9; color: #a50f16; }
+/* "Hide menu" button pinned to the bottom of the left menu */
+.side-nav .side-menu { flex: 1 0 auto; padding-bottom: 12px; }
+.side-bottom { position: sticky; bottom: 0; padding: 10px 12px 14px; background: linear-gradient(180deg, rgba(232, 48, 31, 0), rgba(232, 48, 31, .92) 30%); }
+.side-hide-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, .55); border-radius: 8px; background: rgba(255, 255, 255, .12);
+  color: #fff; font-size: .88rem; font-weight: 600;
+}
+.side-hide-btn:hover, .side-hide-btn:focus-visible { background: #fff; color: #b30d14; border-color: #fff; }
+/* ---- Service Availability heatmaps (SRE Metrics > P99) ---- */
+.heat-green { background: #d1f2d9 !important; color: #0f5132; }
+.heat-yellow { background: #fff3cd !important; color: #664d03; }
+.heat-red { background: #f8d7da !important; color: #842029; }
+.heat-none { background: #f3f4f6 !important; color: #9aa0a6; }
+.heatmap td, .heatmap th { font-size: 12px; white-space: nowrap; }
+.heatmap td { min-width: 58px; font-variant-numeric: tabular-nums; }
+.heatmap .heatmap-service { position: sticky; left: 0; z-index: 1; background: #fff; min-width: 160px; text-align: left; }
+.heatmap thead th {                 /* red header row, text centred (same red as the other review tables) */
+  --bs-table-bg: var(--th-bg-strong); background: var(--th-bg-image) var(--th-bg-strong); color: #fff; border-color: var(--th-border);
+  text-align: center; vertical-align: middle;
+}
+.heatmap thead .heatmap-service { background: var(--th-bg-image) var(--th-bg-strong); z-index: 2; text-align: center; }
+.heatmap-search { width: 240px; max-width: 100%; }   /* Service Name search, right side of each heatmap header */
+.heat-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 12px; }
+.heat-chip { padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, .06); }
+.heat-cell { display: inline-block; min-width: 72px; padding: 2px 8px; border-radius: 6px; }
+/* multi-select list floats above the page and popups (MultiSelect.jsx) */
+.multi-select-menu { z-index: 1090; display: flex; flex-direction: column; overflow: hidden; }
+.multi-select-menu .multi-select-options { flex: 1 1 auto; min-height: 0; }
+/* details in one row (CBGM Overview +): fixed items, then one that takes the rest of the row */
+.details-inline { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin: 0; }
+.details-inline > div { min-width: 140px; }
+.details-inline dt { font-size: .75rem; font-weight: 600; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .02em; }
+.details-inline dd { margin: 0; }
+.details-inline .details-grow { flex: 1 1 300px; min-width: 0; }
+.details-inline .details-grow dd { white-space: nowrap; overflow-x: auto; }
+/* ---- ADR Calendar (AdrCalendarPage.jsx) ---- */
+.adr-calendar th { background: var(--th-bg-image) var(--th-bg-strong); color: #fff; border-color: var(--th-border); font-size: 12px; }
+.adr-calendar td { width: 14.28%; height: 108px; vertical-align: top; padding: 6px; font-size: 12px; }
+.adr-calendar td.adr-empty { background: #f8f9fa; }
+.adr-calendar td.adr-today { box-shadow: inset 0 0 0 2px var(--brand); }
+.adr-calendar td.adr-freeze { background: #e7f1fb; }
+.adr-calendar td.adr-release { background: #eaf7ee; }
+.adr-day { font-weight: 700; color: #343a40; }
+.adr-mark { background: #fff; color: #495057; border: 1px solid #ced4da; font-weight: 600; }
+.adr-item { display: block; width: 100%; margin-top: 4px; padding: 3px 6px; border: 0; border-left: 3px solid var(--brand); border-radius: 4px;
+  background: #fff1f1; color: #842029; font-size: 11.5px; text-align: left; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adr-item:hover, .adr-item:focus-visible { background: #ffe0e0; }
+.adr-legend { padding: 3px 10px; border-radius: 6px; border: 1px solid #ced4da; align-self: center; }
+.adr-legend.adr-freeze { background: #e7f1fb; }
+.adr-legend.adr-release { background: #eaf7ee; }
+
+/* ---- ADR Review (SRE > ADR > ADR Review) ---- */
+.people-picker { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; height: 38px; padding: 4px 8px; cursor: text;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; } /* one line: more chips scroll sideways */
+.people-chip { flex: 0 0 auto; white-space: nowrap; }
+.people-picker input { flex: 1 0 160px; border: 0; outline: 0; padding: 2px 0; background: transparent; min-width: 120px; }
+.people-chip { display: inline-flex; align-items: center; background: var(--select-blue); color: #fff; font-weight: 600; font-size: .75rem; padding: .35em .6em; } /* same blue as the multi-select chips */
+.people-chip .btn-close { width: .55em; height: .55em; padding: 0; }
+.adr-item-card > .card-header { background: #fbdcdc; border-bottom-color: #f2b8b8; } /* ADR Review: Action Item header, light red */
+.adr-file { min-height: 38px; }
+
+/* New value in "old -> new" (Confirm threshold changes): same blue as the selected-value chips */
+.value-new { color: var(--select-blue); font-weight: 700; }
+
+/* Repeat Schedule: action items (read-only) */
+.repeat-items thead th { background: var(--th-bg-image) var(--th-bg); color: #fff; border-color: var(--th-border); font-weight: 600; }
+
+/* ---- Incident Metrics (SL1-3): tables and bar charts ---- */
+.incident-metrics-table th, .incident-metrics-table td { text-align: center; white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.incident-metrics-table thead th { background: var(--th-bg-image) var(--th-bg); color: #fff; border-color: var(--th-border); font-weight: 600; }
+.incident-metrics-table .metric-total { font-weight: 700; background: #fff7f7; }
+.incident-metrics-table tfoot th { background: #f1f3f5; }
+.chart-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.chart-grid { stroke: #e9ecef; stroke-width: 1; }
+.chart-axis { font-size: 12px; fill: #6c757d; }
+.chart-label { font-size: 12px; fill: #212529; }
+.chart-value { font-size: 12px; fill: #495057; font-weight: 600; }
+.chart-tip { position: absolute; pointer-events: none; z-index: 5; background: #212529; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+.chart-baseline { stroke: #adb5bd; stroke-width: 1; }
+.chart-scroll { overflow-x: auto; }
+/* MTTD & MTTR month tables: each month = Incident Count + minutes */
+.month-pairs thead th.sub { font-size: 11px; font-weight: 600; white-space: normal; min-width: 64px; line-height: 1.2; }
+.month-pairs td.month-avg { background: #f8f9fa; }
+.month-pairs th[colspan="2"] { border-bottom-color: rgba(255, 255, 255, .35); }
+/* Owner Platform stays in view while the month columns scroll sideways */
+.month-pairs tbody th:first-child, .month-pairs tfoot th:first-child { position: sticky; left: 0; z-index: 1; background: #fff; min-width: 150px; }
+.month-pairs tfoot th:first-child { background: #f1f3f5; }
+.month-pairs thead tr:first-child th:first-child { position: sticky; left: 0; z-index: 2; background: var(--th-bg-image) var(--th-bg); }
+/* SL4 Metrics: table inside the tabbed card (space before the table) */
+.tab-table-body { padding: 16px; }
+.tab-table-body .table-responsive { border-radius: 6px; }
+
+/* Tabs (components/Tabs.jsx, every tabbed page): filled active tab, dividers between the others, line underneath */
+.seg-tabs { display: flex; flex-wrap: wrap; align-items: stretch; background: #f8f9fa; border-bottom: 2px solid var(--tab-bg);
+  border-top-left-radius: var(--bs-card-inner-border-radius); border-top-right-radius: var(--bs-card-inner-border-radius); overflow: hidden; }
+.seg-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent;
+  padding: 11px 20px; font-weight: 600; font-size: .95rem; color: #495057; border-radius: 12px 12px 0 0; }
+.seg-tab:hover { color: var(--tab-bg); background: color-mix(in srgb, var(--tab-bg) 8%, #fff); }
+.seg-tab + .seg-tab::before { content: ''; position: absolute; left: 0; top: 25%; height: 50%; border-left: 1px solid #ced4da; }
+.seg-tab.active, .seg-tab.active:hover { background: var(--tab-bg); color: #fff; }
+.seg-tab.active::before, .seg-tab.active + .seg-tab::before { display: none; } /* no divider next to the filled tab */
+.seg-tab-count { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 10px; background: #e9ecef; color: #495057; }
+.seg-tab.active .seg-tab-count { background: #fff; color: var(--tab-bg); }
+.seg-tabs-standalone { border-radius: 12px 12px 0 0; } /* tabs outside a card (ticket page) */
+/* Weekly P99 Dashboard: Week N-1 / Week N column groups */
+.weekly-p99-table thead th { vertical-align: middle; }
+.weekly-p99-table .week-dates { font-size: 11px; font-weight: 400; opacity: .9; }
+.weekly-p99-table thead th.sub { font-size: 12px; }
+.weekly-p99-table td.text-start { text-align: left; white-space: normal; }
+.weekly-p99-table thead th { text-align: center; } /* every header centred */
+.sa-toggles { padding-bottom: 6px; } /* toggles line up with the inputs next to them */
+.incident-metrics-table tr.row-all th, .incident-metrics-table tr.row-all td { background: #fff7f7; font-weight: 700; } /* Change Metrics: the All row */
+.incident-metrics-table th.fail-col { width: 88px; min-width: 88px; white-space: normal; } /* Fail Count and Fail%: same width */
+
+/* ---- Left menu collapsed (computers): narrow bar with each main menu's icon and name, sub-pages in a pop-out ---- */
+.side-rail { position: fixed; top: var(--header-h); bottom: 0; left: 0; width: var(--side-rail-w, 70px); z-index: 1025; flex-direction: column;
+  padding: 8px 0 0; overflow-y: auto; overflow-x: hidden; color: #fff; box-shadow: 2px 0 10px rgba(0, 0, 0, .08);
+  background: linear-gradient(180deg, #e3161b 0%, #ec3434 40%, #f0573f 72%, #e8301f 100%); }
+.side-rail-menu { flex: 1 0 auto; }
+.side-rail-link { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; padding: 9px 4px; border: 0;
+  background: none; color: rgba(255, 255, 255, .95); text-decoration: none; text-align: center; font-size: 11px; font-weight: 600; line-height: 1.2; }
+.side-rail-link .bi { font-size: 1.25rem; }
+.side-rail-link:hover, .side-rail-link.flying { background: rgba(255, 255, 255, .14); color: #fff; }
+.side-rail-link.active { background: #fff; color: var(--brand-dark, #b30d14); }
+.side-rail-bottom { position: sticky; bottom: 0; padding: 8px 8px 12px; background: linear-gradient(180deg, rgba(232, 48, 31, 0), rgba(232, 48, 31, .92) 30%); }
+.side-rail-expand { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; padding: 6px 2px; color: #fff;
+  font-size: 11px; font-weight: 600; border: 1px solid rgba(255, 255, 255, .55); border-radius: 8px; background: rgba(255, 255, 255, .12); }
+.side-rail-expand:hover, .side-rail-expand:focus-visible { background: #fff; color: #b30d14; border-color: #fff; }
+.side-flyout { position: fixed; left: var(--side-rail-w, 70px); z-index: 1030; min-width: 230px; max-width: 300px; overflow-y: auto;
+  padding: 6px 0; background: #fff; border-radius: 0 10px 10px 0; box-shadow: 4px 6px 20px rgba(0, 0, 0, .18); border-left: 3px solid var(--brand); }
+.side-flyout-title { padding: 6px 14px 4px; font-weight: 700; color: var(--brand-dark, #b30d14); font-size: .9rem; }
+.side-flyout-heading { padding: 8px 14px 2px; font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6c757d; }
+.side-flyout-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; color: #212529; text-decoration: none; font-size: .86rem; }
+.side-flyout-item .bi { font-size: .85rem; color: #6c757d; }
+.side-flyout-item.sub { padding-left: 30px; }
+.side-flyout-item:hover { background: #fff1f1; color: var(--brand-dark, #b30d14); }
+.side-flyout-item.active { background: var(--brand); color: #fff; }
+.side-flyout-item.active .bi { color: #fff; }
+.side-flyout-feature { margin-top: 4px; border-top: 1px solid #f1d0d0; font-weight: 600; color: var(--brand-dark, #b30d14); } /* e.g. Go to CBGM Portal */
+/* Left menu scroll buttons (shown only when there is more menu above / below) */
+.side-scroll-btn { position: fixed; left: 0; width: var(--side-open-w, 220px); z-index: 1027; display: flex; align-items: center; justify-content: center;
+  height: 26px; border: 0; padding: 0; color: #fff; font-size: 1rem; background: rgba(160, 10, 16, .55); backdrop-filter: blur(2px); }
+.side-scroll-btn:hover, .side-scroll-btn:focus-visible { background: rgba(160, 10, 16, .85); }
+.side-scroll-btn.up { top: var(--header-h); }
+.side-scroll-btn.down { bottom: 64px; } /* just above Collapse View / Expand */
+.side-scroll-btn.rail { width: var(--side-rail-w, 70px); }
+.side-scroll-btn.rail.down { bottom: 70px; }
+
+/* ---- Infra Ops > Capacity Review Overview: Uptime / CPU / Memory / File System cells coloured by the JSON level ---- */
+.cap-td { padding: 0 !important; min-width: 96px; width: 96px; }
+.cap-cell { white-space: nowrap; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 40px; padding: 4px 6px; font-size: 12px; font-weight: 700; }
+.cap-red { background: #f8d7da; color: #842029; }
+.cap-yellow { background: #fff3cd; color: #664d03; }
+.cap-green { background: #d1f2d9; color: #0f5132; }
+.cap-app-link { font-size: 13px; }
+/* Capacity pop-up: % levels (config inputs.capacityLevels) */
+.incident-metrics-table td.pct-red, .pct-legend.pct-red { background: #f8d7da; color: #842029; font-weight: 700; }
+.incident-metrics-table td.pct-saffron, .pct-legend.pct-saffron { background: #ffd8a8; color: #8a4500; font-weight: 700; }
+.incident-metrics-table td.pct-yellow, .pct-legend.pct-yellow { background: #fff3cd; color: #664d03; font-weight: 700; }
+.incident-metrics-table td.pct-green, .pct-legend.pct-green { background: #d1f2d9; color: #0f5132; }
+.pct-legend { padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+/* Capacity overview: Platform Name spans its App Codes */
+.cap-overview-table thead th { background: var(--th-bg-image) var(--th-bg); color: #fff; border-color: var(--th-border); font-weight: 600; font-size: 13px; vertical-align: middle; }
+.cap-overview-table td, .cap-overview-table th { font-size: 13px; }
+.cap-overview-table .cap-platform { background: #fff7f7; font-weight: 700; vertical-align: middle; min-width: 160px; }
+/* Merged (rowspan) cells of the capacity tables: centred both ways */
+.cap-overview-table .cap-platform, .cap-review-table .cap-platform, .cap-review-table td[rowspan] { text-align: center; vertical-align: middle; }
+.cap-search { max-width: 360px; }
+/* Capacity Review: Add / Edit remarks - icon only */
+.cap-remark-btn { line-height: 1; font-size: 1.05rem; text-decoration: none; }
+/* Capacity Review Daily/Weekly: day columns */
+.cap-review-table td, .cap-review-table th { white-space: nowrap; }
+
+/* ADR Review: the fields wrapper (fieldset) adds no border or spacing of its own */
+.adr-review-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+/* Capacity Review Daily/Weekly filters: sized to their content (narrower on phones) */
+.cr-filter-by { width: 170px; }
+.cr-filter-year { width: 120px; }
+.cr-filter-week { width: 340px; max-width: 100%; }
+
+/* ---- Left menu colour: config.js sideMenuColor 'black' (Layout adds .side-theme-black): black menu, white text,
+   expanded and collapsed (bar + pop-outs). 'red' keeps the red menu above. Shades: --side-black-bg / -active. ---- */
+.side-theme-black { --side-black-bg: #2d3136; --side-black-active: #43484e; --side-black-fade: rgba(58, 63, 69, .95); }
+.side-theme-black .side-nav, .side-theme-black .side-rail { color: #fff; box-shadow: 2px 0 10px rgba(0, 0, 0, .25);
+  /* same charcoal shading and soft light shapes as the black page banner, running top to bottom */
+  background:
+    radial-gradient(ellipse 130% 30% at 0% 100%, rgba(255, 255, 255, .08), transparent 70%),
+    radial-gradient(circle at 115% 6%, rgba(255, 255, 255, .09), transparent 32%),
+    linear-gradient(160deg, transparent 55%, rgba(255, 255, 255, .04) 55%, rgba(255, 255, 255, .02) 80%, transparent 80%),
+    linear-gradient(180deg, #26292d 0%, #2d3136 45%, #3a3f45 100%); }
+.side-theme-black .side-menu .side-link, .side-theme-black .side-rail-link { color: #fff; }
+.side-theme-black .side-menu .side-link:hover, .side-theme-black .side-rail-link:hover, .side-theme-black .side-rail-link.flying { background: rgba(255, 255, 255, .1); color: #fff; }
+/* current page: lighter row with a red bar on the left (text stays white) */
+.side-theme-black .side-menu .side-link.active, .side-theme-black .side-rail-link.active { background: var(--side-black-active); color: #fff; box-shadow: inset 3px 0 0 var(--brand); }
+.side-theme-black .side-menu .side-link.active-parent { background: rgba(255, 255, 255, .06); color: #fff; }
+.side-theme-black .side-sub { background: rgba(255, 255, 255, .04); }
+.side-theme-black .side-heading { color: rgba(255, 255, 255, .55); }
+.side-theme-black .side-bottom, .side-theme-black .side-rail-bottom { background: linear-gradient(180deg, rgba(58, 63, 69, 0), var(--side-black-fade) 30%); }
+.side-theme-black .side-hide-btn, .side-theme-black .side-rail-expand { border-color: rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .08); color: #fff; }
+.side-theme-black .side-hide-btn:hover, .side-theme-black .side-hide-btn:focus-visible,
+.side-theme-black .side-rail-expand:hover, .side-theme-black .side-rail-expand:focus-visible { background: #fff; color: var(--side-black-bg); border-color: #fff; }
+.side-theme-black .side-scroll-btn { background: rgba(0, 0, 0, .65); }
+.side-theme-black .side-scroll-btn:hover, .side-theme-black .side-scroll-btn:focus-visible { background: rgba(0, 0, 0, .9); }
+/* collapsed view pop-out */
+.side-theme-black .side-flyout { background: var(--side-black-bg); border-left-color: var(--brand); box-shadow: 4px 6px 20px rgba(0, 0, 0, .35); }
+.side-theme-black .side-flyout-title { color: #fff; }
+.side-theme-black .side-flyout-heading { color: rgba(255, 255, 255, .55); }
+.side-theme-black .side-flyout-item, .side-theme-black .side-flyout-item .bi { color: #fff; }
+.side-theme-black .side-flyout-item:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.side-theme-black .side-flyout-item.active { background: var(--side-black-active); color: #fff; box-shadow: inset 3px 0 0 var(--brand); }
+.side-theme-black .side-flyout-feature { border-top-color: rgba(255, 255, 255, .15); color: #fff; }
+
+/* CBGM (Layout adds .module-cbgm): App Code multi-selects a bit smaller - the chosen values (chips) and the list */
+.module-cbgm .multi-select .chip { font-size: .68rem; padding: .25em .5em; }
+.module-cbgm .multi-select .chip .btn-close { width: .55em; height: .55em; }
+.module-cbgm .multi-select .dropdown-item { font-size: 12px; padding-top: .2rem; padding-bottom: .2rem; }
+
+/* ---- Top header colour: config.js headerColor 'black' (Layout adds .header-theme-black): the page banner (title,
+   breadcrumb) and the Search / user-menu buttons in the top bar turn charcoal, white text; the top bar itself stays
+   white (DBS logo). 'red' keeps the red banner and buttons above. Same shades as the black left menu. ---- */
+.header-theme-black { --header-black-bg: #2d3136; --header-black-hover: #43484e; }
+.header-theme-black .page-banner { background: linear-gradient(100deg, #26292d 0%, #2d3136 45%, #3a3f45 100%); }
+.header-theme-black .page-banner::before { background: linear-gradient(160deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .03)); }
+.header-theme-black .page-banner::after { background: linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(255, 255, 255, .05)); }
+.header-theme-black .page-banner .btn-primary { color: var(--header-black-bg); }
+.header-theme-black .page-banner .btn-primary:hover, .header-theme-black .page-banner .btn-primary:focus-visible { background: #e9ecef; border-color: #e9ecef; color: var(--header-black-bg); }
+.header-theme-black .btn-header-action { background: var(--header-black-bg); }
+.header-theme-black .btn-header-action:hover, .header-theme-black .btn-header-action:focus-visible,
+.header-theme-black .btn-header-action[aria-expanded="true"] { background: var(--header-black-hover); }
+.header-theme-black .btn-header-action:focus-visible { box-shadow: inset 0 0 0 2px #fff; }
+
+
+
+/* ---- Submit buttons (.btn-primary): config.js chooseColor.submitButton 'red' | 'black' (Layout adds .submit-theme-*);
+   'blue' keeps Bootstrap blue. Only Bootstrap's button variables change, so the white button on the page banner stays. ---- */
+.submit-theme-red .btn-primary {
+  --bs-btn-bg: #e3161b; --bs-btn-border-color: #e3161b; --bs-btn-hover-bg: #c8102e; --bs-btn-hover-border-color: #c8102e;
+  --bs-btn-active-bg: #b00d27; --bs-btn-active-border-color: #b00d27; --bs-btn-disabled-bg: #e3161b; --bs-btn-disabled-border-color: #e3161b;
+  --bs-btn-focus-shadow-rgb: 227, 22, 27;
+}
+.submit-theme-black .btn-primary {
+  --bs-btn-bg: #2d3136; --bs-btn-border-color: #2d3136; --bs-btn-hover-bg: #43484e; --bs-btn-hover-border-color: #43484e;
+  --bs-btn-active-bg: #1f2225; --bs-btn-active-border-color: #1f2225; --bs-btn-disabled-bg: #2d3136; --bs-btn-disabled-border-color: #2d3136;
+  --bs-btn-focus-shadow-rgb: 45, 49, 54;
+}
+
+/* View Alert Onboarded Status: the + table (Alert Type / FATAL / WARNING) header in light brown */
+.table > thead.alert-detail-head > tr > th { --bs-table-bg: #efe3d3; background: #efe3d3; color: #5c4033; border-color: #dccbb5; font-weight: 600; }
+
+/* ---- My Approval: number of requests waiting (SideNav / TopNav, usePendingApprovals) ---- */
+.nav-count { font-size: .7rem; min-width: 1.5em; font-weight: 600; }
+.side-rail-link { position: relative; }
+.side-rail-link .side-rail-count { position: absolute; top: 4px; right: 14px; font-size: .62rem; }
